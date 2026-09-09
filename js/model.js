@@ -53,8 +53,10 @@ function face({ box, atlas, uv, uvSize, size, side, flat }) {
 }
 
 /* One cuboid: a zero-size anchor at the box centre with six faces hung off it.
-   `explicit` overrides the standard unwrap with per-face [u, v, w, h] patches,
-   which is how a block gets the same 16x16 texture on all six sides. */
+   `explicit` overrides the standard unwrap for whichever faces it names, with
+   an [u, v, w, h] patch each — that is how a block gets the same 16x16 texture
+   on all six sides, and how a part whose layout had to be read off the texture
+   gets pointed at the right rectangle. */
 export function cuboid(uvOrigin, dim, offset, {
   atlas = [64, 64], explicit = null, px = PX, cls = '',
 } = {}) {
@@ -76,8 +78,9 @@ export function cuboid(uvOrigin, dim, offset, {
     if (flat && f.key !== only) continue;
     const [fw, fh] = f.size(w, h, d);
     let uv, uvSize;
-    if (explicit) {
-      const [x, y, uw, uh] = explicit[f.key];
+    const patch = explicit && explicit[f.key];
+    if (patch) {
+      const [x, y, uw, uh] = patch;
       uv = [x, y];
       uvSize = [uw, uh];
     } else {
@@ -113,7 +116,8 @@ function bounds(spec) {
 
 /* Build a whole model from a part list written the way the game writes them:
      { name, uv: [u, v], box: [x, y, z, w, h, d], pos: [x, y, z], rot: [x,y,z] }
-   `faces` may override `uv` with explicit per-face [u, v, w, h] patches.
+   `faces` may override `uv` for some or all faces with an explicit
+   [u, v, w, h] patch; anything it leaves out falls back to the unwrap.
    `box` is addBox — a corner and a size. `pos` is the part's pivot, `rot` its
    resting rotation in degrees. Each part becomes a pivot div (which animation
    can rotate freely) holding one cuboid. */

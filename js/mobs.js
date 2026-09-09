@@ -30,13 +30,28 @@ function squidSpec() {
 }
 
 /* ---- Cod ----------------------------------------------------------------
-   Body and head are read straight off the texture's own unwrap. The tail is a
-   zero-width box, which is how the game draws a flat fin: the two side faces
-   land on top of each other and the four edge faces have no area. */
+   Read off cod.png rather than remembered. Dumping the texture's alpha channel
+   shows where the paint actually is, which settles what each part can be:
+
+     body  texOffs(0,0)  2x4x7  -> x7-11 y0-7, plus the band x0-18 y7-11
+     head  texOffs(11,0) 2x4x3  -> x14-18 y0-3, plus the band x11-21 y3-7
+     tail  a solid 6x4 fan at x0-6 y0-4, tucked into the corner the body's own
+           unwrap leaves empty. No texOffs lands a face there, so the patch is
+           named outright instead of guessed at.
+     fins  texOffs(24,0) and (24,4), 2x0x2 each -> the little 2x2s at x26-28
+
+   texOffs(20,0) looks like a fin and is where the game keeps one, but in this
+   pack that patch is all but blank, so nothing is hung on it.
+
+   A fin is a box with one dimension zero, which is how the game draws flat
+   parts; model.js turns each into a single double-sided quad. */
 const COD = [
-  { name: 'body', uv: [0, 0],   box: [-1, -2, 0, 2, 4, 7],  pos: [0, 22, 0] },
-  { name: 'head', uv: [11, 0],  box: [-1, -2, -3, 2, 4, 3], pos: [0, 22, 0] },
-  { name: 'tail', uv: [20, 10], box: [0, -2, 0, 0, 4, 4],   pos: [0, 22, 7] },
+  { name: 'body', uv: [0, 0],  box: [-1, -2, 0, 2, 4, 7],  pos: [0, 22, 0] },
+  { name: 'head', uv: [11, 0], box: [-1, -2, -3, 2, 4, 3], pos: [0, 22, 0] },
+  { name: 'tail', box: [0, -2, 0, 0, 4, 6], pos: [0, 22, 7],
+    faces: { left: [0, 0, 6, 4] } },
+  { name: 'finR', uv: [24, 0], box: [-2, 0, 0, 2, 0, 2], pos: [-1, 23, 1], rot: [0, 0, -35] },
+  { name: 'finL', uv: [24, 4], box: [0, 0, 0, 2, 0, 2],  pos: [1, 23, 1],  rot: [0, 0, 35] },
 ];
 
 /* Salmon and dolphin are deliberately absent. Their textures are here in the
@@ -45,7 +60,7 @@ const COD = [
 export const MODELS = {
   squid:  { spec: squidSpec(), atlas: [64, 32], texture: 'squid.png',      px: 3.4, swim: 'squid' },
   glow:   { spec: squidSpec(), atlas: [64, 32], texture: 'glow_squid.png', px: 3.2, swim: 'squid' },
-  fry:    { spec: squidSpec(), atlas: [64, 32], texture: 'squid_baby.png', px: 1.8, swim: 'squid' },
+  fry:    { spec: squidSpec(), atlas: [64, 32], texture: 'squid_baby.png', px: 2.6, swim: 'squid' },
   cod:    { spec: COD,         atlas: [32, 32], texture: 'cod.png',        px: 6.0, swim: 'fish'  },
 };
 
@@ -79,14 +94,40 @@ function spawn(kind, rnd, base) {
   lane.style.setProperty('--to',   dir > 0 ? '118vw' : '-18vw');
   lane.style.setProperty('--dur', `${secs.toFixed(1)}s`);
   lane.style.setProperty('--delay', `${(-rnd() * secs).toFixed(1)}s`);
-  lane.style.setProperty('--bob', `${(8 + rnd() * 18).toFixed(0)}px`);
+  lane.style.setProperty('--bob', `${(6 + rnd() * 14).toFixed(0)}px`);
   lane.style.opacity = (0.42 + depth * 0.34).toFixed(2);
 
-  /* A fish model is built nose-first along -Z, so turning it a quarter turn
-     puts it side-on and swimming the way the lane runs. A squid has no nose to
-     speak of; it just faces the room. */
-  const face = k.swim === 'fish' ? (dir > 0 ? -72 : 72) : (dir > 0 ? -22 : 22);
-  lane.style.setProperty('--face', face);
+  /* How the model is turned to face its heading.
+     A fish is built nose-first along -Z, so a quarter turn about Y puts it
+     side-on and swimming the way the lane runs; a little less than a quarter
+     leaves it slightly three-quarter so it reads as solid.
+     A squid is built upright, mantle at -Y and tentacles hanging at +Y, and it
+     swims mantle-first with the tentacles trailing — so it lies down, a quarter
+     turn about Z, which leaves its eyes still facing the room. The yaw on top
+     of that angles its length into the screen, so the ring of eight tentacles
+     is seen open rather than edge-on as a single bar. */
+  const squid = k.swim === 'squid';
+  lane.style.setProperty('--rx', squid ? -10 : -6);
+  lane.style.setProperty('--ry', squid ? (dir > 0 ? 32 : -32) : (dir > 0 ? -72 : 72));
+  lane.style.setProperty('--rz', squid ? (dir > 0 ? 90 : -90) : 0);
+
+  /* The pulse. A squid holds still, fans its tentacles wide, then snaps them
+     shut — and it is the snap that moves it.
+
+     --surge is how far ahead of its lane one stroke throws it. The lane takes
+     that distance back over the glide, so the size has to stay under what the
+     lane itself covers in that time or a slow squid would visibly slide
+     backwards while coasting. Measuring it in vw, the same unit as the lane,
+     keeps the relationship true at any window width: the lane crosses 136vw in
+     `secs`, the glide is the back 48% of a pulse, and taking 55% of the ground
+     the lane makes in that window leaves the squid always net forward. */
+  if (squid) {
+    const pulse = 2.5 + rnd() * 1.4;
+    const surge = 0.55 * 136 * 0.48 * pulse / secs;
+    lane.style.setProperty('--pulse', `${pulse.toFixed(2)}s`);
+    lane.style.setProperty('--surge', `${(dir * surge).toFixed(2)}vw`);
+    lane.style.setProperty('--pulse-delay', `${(-rnd() * pulse).toFixed(2)}s`);
+  }
 
   const model = buildModel(k.spec, { atlas: k.atlas, px: k.px, prefix: kind });
   model.classList.add('mob', `mob-${k.swim}`);
@@ -94,7 +135,12 @@ function spawn(kind, rnd, base) {
   // stylesheet that substitutes it, not against the document.
   model.style.setProperty('--mob-url',
     `url("${new URL(base + k.texture, document.baseURI).href}")`);
-  lane.appendChild(model);
+  // The surge rides on its own wrapper so it can add to the lane's steady
+  // travel instead of fighting it for the transform property.
+  const lurch = document.createElement('div');
+  lurch.className = 'lurch';
+  lurch.appendChild(model);
+  lane.appendChild(lurch);
   return lane;
 }
 
