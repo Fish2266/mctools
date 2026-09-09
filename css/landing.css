@@ -1,0 +1,338 @@
+/* ============================================================================
+   FISH'S MC TOOLS — Landing layer
+   Rides on the Frame & Groove token set, base layer and component kit. One
+   screen: a name, the character, and the three tools.
+   ========================================================================= */
+
+/* The studio locks the document to one screen; this page may need a nudge of
+   scroll. `overflow` has to stay `visible` — any other value makes the body its
+   own scroll container, which strands fixed children at document coordinates. */
+html { overflow-x: clip; }
+html, body { height: auto; }
+body {
+  overflow: visible;
+  min-height: 100svh;
+  background: var(--bg-base);
+  /* The prismarine frame is fixed to the viewport, so the page keeps clear of
+     it with padding rather than by doing arithmetic on its own width. */
+  padding-inline: calc(var(--reef) + var(--s-5));
+}
+
+/* ======================= THE SEA ======================================== */
+/* Layers, back to front: animated water, the mobs swimming through it, a scrim
+   so the page reads, and a dark prismarine frame around the lot. */
+:root { --reef: 32px; }   /* a dark prismarine block at 2x */
+@media (max-width: 720px) { :root { --reef: 16px; } }
+
+#ocean {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#sea { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+/* Enough wash to read the page over, not so much that the sea disappears.
+   The dark end sits at the bottom, the way light falls through water. */
+#scrim {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-void) 26%, transparent),
+      color-mix(in srgb, var(--bg-void) 62%, transparent));
+}
+:root[data-theme="bone"] #scrim {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-base) 34%, transparent),
+      color-mix(in srgb, var(--bg-base) 78%, transparent));
+}
+
+/* ---- Dark prismarine frame ---------------------------------------------- */
+/* One element, four edges: the same 16x16 block tiled along each side at a
+   whole 2x, so it stays crisp instead of being scaled to fit a border box. */
+#reef {
+  --slab: url("../assets/dark_prismarine.png");
+  position: fixed; inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+  image-rendering: pixelated;
+  background-image: var(--slab), var(--slab), var(--slab), var(--slab);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-size: var(--reef) var(--reef);
+}
+#reef::after {
+  content: "";
+  position: absolute;
+  inset: var(--reef);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ---- Swimmers ------------------------------------------------------------
+   Each lane carries one mob straight across the viewport; the model inside is
+   turned to face the way it is going and bobs on its own clock. */
+/* Above the scrim, so the mobs read as sea life rather than silt. */
+#life { position: absolute; inset: 0; z-index: 1; }
+
+.swimmer {
+  position: absolute;
+  top: var(--top);
+  left: 0;
+  will-change: transform;
+  animation: swim var(--dur) linear var(--delay) infinite;
+}
+/* --from and --to are set per mob, so one keyframe covers both directions. */
+@keyframes swim {
+  from { transform: translateX(var(--from)); }
+  to   { transform: translateX(var(--to)); }
+}
+
+.mob {
+  position: relative;
+  transform-style: preserve-3d;
+  /* --face is the heading in degrees, already worked out per mob: side-on for
+     a fish going right, the other way round for one going left. */
+  transform: scale(var(--scale)) rotateX(-6deg) rotateY(calc(var(--face) * 1deg));
+  animation: bob calc(var(--dur) / 7) ease-in-out infinite alternate;
+}
+@keyframes bob {
+  from { margin-top: 0; }
+  to   { margin-top: var(--bob); }
+}
+
+.mob .mc-group, .mob .mc-box {
+  position: absolute; top: 0; left: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+}
+.mob .mc-face { background-image: var(--mob-url); }
+
+/* Squid tentacles trail and flick; fish beat their tails. */
+.mob-squid [class*="-t"] { animation: tentacle 2.6s ease-in-out infinite alternate; }
+.mob-squid [class*="-t1"] { animation-delay: -0.4s; }
+.mob-squid [class*="-t3"] { animation-delay: -0.9s; }
+.mob-squid [class*="-t5"] { animation-delay: -1.4s; }
+.mob-squid [class*="-t7"] { animation-delay: -1.9s; }
+@keyframes tentacle {
+  from { transform: var(--rest) rotateX(-16deg); }
+  to   { transform: var(--rest) rotateX(14deg); }
+}
+
+.mob-fish [class*="-tail"], .mob-fish [class*="-fluke"], .mob-fish [class*="-bodyB"] {
+  animation: tailbeat 0.9s ease-in-out infinite alternate;
+}
+@keyframes tailbeat {
+  from { transform: var(--rest) rotateY(-17deg); }
+  to   { transform: var(--rest) rotateY(17deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swimmer, .mob, .mob * { animation: none !important; }
+}
+
+/* ======================= PAGE =========================================== */
+.page {
+  position: relative;
+  z-index: 1;
+  width: min(1080px, 100%);
+  min-height: 100svh;
+  margin-inline: auto;
+  padding: calc(var(--reef) + var(--s-8)) 0 calc(var(--reef) + var(--s-6));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-8);
+}
+
+/* ======================= HEAD =========================================== */
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+  align-items: center;
+  gap: var(--s-8);
+}
+
+.head h1 {
+  font-size: clamp(46px, 9vw, 96px);
+  font-weight: var(--w-bold);
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+}
+.head h1 em { font-style: normal; color: var(--accent); }
+
+@media (max-width: 720px) {
+  .head { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: var(--s-4); }
+  .head h1 { order: 2; }
+}
+
+/* ======================= SKIN VIEWER ==================================== */
+.mc-stage {
+  position: relative;
+  width: 100%; max-width: 300px;
+  aspect-ratio: 1 / 1.15;
+  display: grid; place-items: center;
+  perspective: 1400px;
+  perspective-origin: 50% 44%;
+  justify-self: end;
+}
+@media (max-width: 720px) { .mc-stage { justify-self: center; max-width: 230px; } }
+
+/* The pool the diorama sits in. */
+.mc-stage::after {
+  content: "";
+  position: absolute; left: 50%; bottom: 10%;
+  width: 210px; height: 38px;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 50% at 50% 50%,
+    color-mix(in srgb, var(--bg-void) 42%, transparent), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.mc-rig {
+  --yaw: 0deg;
+  --pitch: 0deg;
+  position: relative;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  /* Read right to left: put the model's own centre on the origin, then spin
+     about it. 96px is half of the player-plus-block, in neck space. */
+  transform:
+    rotateX(calc(-9deg + var(--pitch)))
+    rotateY(calc(-27deg + var(--yaw)))
+    translateY(-96px);
+}
+
+/* Only the player floats; the block he stands on stays put. */
+.mc-char { animation: mc-float 6.5s var(--ease-in-out) infinite; }
+@keyframes mc-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.mc-char, .mc-group, .mc-box, .mc-overlay {
+  position: absolute; top: 0; left: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+}
+
+.mc-face {
+  position: absolute; top: 0; left: 0;
+  background-image: var(--skin-url);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.mc-cape .mc-face { background-image: var(--cape-url); }
+.mc-block .mc-face { background-image: var(--block-url); }
+
+/* Minecraft shades a block by which way the face points, and borrowing that
+   here is the difference between a stack of stickers and something solid. */
+.mc-face[data-side="top"]    { filter: brightness(1.08); }
+.mc-face[data-side="front"]  { filter: none; }
+.mc-face[data-side="back"]   { filter: brightness(0.85); }
+.mc-face[data-side="left"]   { filter: brightness(0.72); }
+.mc-face[data-side="right"]  { filter: brightness(0.8); }
+.mc-face[data-side="bottom"] { filter: brightness(0.55); }
+
+/* The head leads the look-at; the arms breathe on a slow offset loop. */
+.mc-head {
+  --head-yaw: 0deg;
+  --head-pitch: 0deg;
+  transform: rotateY(var(--head-yaw)) rotateX(var(--head-pitch)) !important;
+}
+.mc-armR { animation: mc-swing-a 4.4s var(--ease-in-out) infinite; }
+.mc-armL { animation: mc-swing-b 4.4s var(--ease-in-out) infinite; }
+.mc-cape { animation: mc-flap 4.4s var(--ease-in-out) infinite; }
+
+@keyframes mc-swing-a {
+  0%, 100% { transform: translate3d(-24px, 12px, 0) rotateX(2deg)  rotateZ(2deg); }
+  50%      { transform: translate3d(-24px, 12px, 0) rotateX(-5deg) rotateZ(4deg); }
+}
+@keyframes mc-swing-b {
+  0%, 100% { transform: translate3d(24px, 12px, 0) rotateX(-4deg) rotateZ(-3deg); }
+  50%      { transform: translate3d(24px, 12px, 0) rotateX(3deg)  rotateZ(-1deg); }
+}
+/* Negative, so the hem swings away from the body rather than through it. */
+@keyframes mc-flap {
+  0%, 100% { transform: translate3d(0, 6px, -12px) rotateX(-7deg); }
+  50%      { transform: translate3d(0, 6px, -12px) rotateX(-15deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-char, .mc-armR, .mc-armL, .mc-cape { animation: none; }
+}
+
+/* ======================= TOOLS ========================================== */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+  gap: var(--s-4);
+}
+
+.tool {
+  position: relative;
+  height: 100%;
+  display: flex; flex-direction: column;
+  padding: var(--s-5);
+  background: var(--surface-1);
+  border-radius: var(--r-xl);
+  box-shadow: var(--bevel), 0 0 0 1px var(--line-soft), var(--sh-2);
+  overflow: hidden;
+  color: inherit;
+  transition: transform var(--d-base) var(--ease-out),
+              box-shadow var(--d-base) var(--ease-out);
+}
+.tool::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 82%);
+}
+a.tool:hover {
+  text-decoration: none;
+  transform: translateY(-3px);
+  box-shadow: var(--bevel), 0 0 0 1px color-mix(in srgb, var(--accent) 34%, var(--line)), var(--sh-4);
+}
+a.tool:active { transform: translateY(0); }
+.tool.is-soon { opacity: 0.9; }
+
+.tool-top { display: flex; align-items: center; gap: var(--s-3); }
+.tool h2 {
+  font-size: var(--t-18); font-weight: var(--w-semi);
+  letter-spacing: var(--tr-tighter); line-height: var(--lh-snug);
+}
+.tool-top .badge { margin-left: auto; flex: none; }
+
+.tool ul.bullets { margin-top: var(--s-4); display: flex; flex-direction: column; gap: var(--s-2); }
+.tool ul.bullets li {
+  display: flex; gap: var(--s-2); align-items: flex-start;
+  font-size: var(--t-13); color: var(--text-2); line-height: 1.4;
+}
+.tool ul.bullets li::before {
+  content: ""; flex: none; margin-top: 7px;
+  width: 4px; height: 4px; border-radius: 1px;
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.tool-foot {
+  margin-top: auto; padding-top: var(--s-5);
+  display: flex; align-items: center; gap: var(--s-2);
+  font-size: var(--t-12); font-weight: var(--w-semi);
+  color: var(--accent);
+}
+.tool.is-soon .tool-foot { color: var(--text-4); font-weight: var(--w-medium); }
+.tool-foot svg { transition: transform var(--d-base) var(--ease-out); }
+a.tool:hover .tool-foot svg { transform: translateX(3px); }
+
+/* Accent per tool, borrowed from the studio's own domain scoping. */
+.tool[data-tool="frame"]    { --accent: var(--emerald-400); }
+.tool[data-tool="wardrobe"] { --accent: var(--amber-400); }
+.tool[data-tool="sounds"]   { --accent: var(--amethyst-400); }
+:root[data-theme="bone"] .tool[data-tool="frame"]    { --accent: var(--emerald-600); }
+:root[data-theme="bone"] .tool[data-tool="wardrobe"] { --accent: var(--amber-600); }
+:root[data-theme="bone"] .tool[data-tool="sounds"]   { --accent: var(--amethyst-600); }
+
+/* ======================= LEGAL ========================================== */
+.legal { font-size: var(--t-11); color: var(--text-4); text-align: center; }
