@@ -32,10 +32,12 @@ export const FACES = [
 /* One textured quad. `uvSize` is how big the patch is in the texture; `size` is
    how big it is on screen. Keeping the two separate is what lets a 16x16 block
    texture stretch across a 22-unit cube while a skin stays pixel-for-pixel. */
-function face({ box, atlas, uv, uvSize, size, side, px }) {
+function face({ box, atlas, uv, uvSize, size, side, flat }) {
   const el = document.createElement('i');
   el.className = 'mc-face';
   el.dataset.side = side;          // CSS shades top/side/bottom like the game
+  // A flat part has no inside to hide, and has to be visible from both sides.
+  if (flat) el.style.backfaceVisibility = 'visible';
   const [fw, fh] = size;
   const [uw, uh] = uvSize;
   const sx = uw ? fw / uw : 1;
@@ -62,7 +64,16 @@ export function cuboid(uvOrigin, dim, offset, {
   el.style.transform =
     `translate3d(${offset[0] * px}px, ${offset[1] * px}px, ${offset[2] * px}px)`;
 
+  /* A fin is a box with one dimension set to zero — that is how the game draws
+     flat parts. Four of its six faces then have no area at all, and the two
+     that remain sit on top of each other, one of them usually blank. Drawing
+     all six would leave the blank one facing the viewer and the fin would
+     vanish, so a flat part becomes exactly one double-sided quad. */
+  const flat = w === 0 || h === 0 || d === 0;
+  const only = w === 0 ? 'left' : h === 0 ? 'top' : d === 0 ? 'front' : null;
+
   for (const f of FACES) {
+    if (flat && f.key !== only) continue;
     const [fw, fh] = f.size(w, h, d);
     let uv, uvSize;
     if (explicit) {
@@ -76,20 +87,44 @@ export function cuboid(uvOrigin, dim, offset, {
     }
     el.appendChild(face({
       box: f.xf(w * px, h * px, d * px),
-      atlas, uv, uvSize, size: [fw * px, fh * px], side: f.key, px,
+      atlas, uv, uvSize, size: [fw * px, fh * px], side: f.key, flat,
     }));
   }
   return el;
 }
 
+/* How far a part list reaches in each axis, so a model can be hung on its own
+   centre instead of on whatever corner the game happened to measure from. */
+function bounds(spec) {
+  const lo = [Infinity, Infinity, Infinity];
+  const hi = [-Infinity, -Infinity, -Infinity];
+  for (const part of spec) {
+    const [bx, by, bz, w, h, d] = part.box;
+    const [px_, py, pz] = part.pos || [0, 0, 0];
+    const min = [px_ + bx, py + by, pz + bz];
+    const max = [min[0] + w, min[1] + h, min[2] + d];
+    for (let i = 0; i < 3; i++) {
+      if (min[i] < lo[i]) lo[i] = min[i];
+      if (max[i] > hi[i]) hi[i] = max[i];
+    }
+  }
+  return lo.map((v, i) => (v + hi[i]) / 2);
+}
+
 /* Build a whole model from a part list written the way the game writes them:
      { name, uv: [u, v], box: [x, y, z, w, h, d], pos: [x, y, z], rot: [x,y,z] }
+   `faces` may override `uv` with explicit per-face [u, v, w, h] patches.
    `box` is addBox — a corner and a size. `pos` is the part's pivot, `rot` its
    resting rotation in degrees. Each part becomes a pivot div (which animation
    can rotate freely) holding one cuboid. */
-export function buildModel(spec, { atlas, px = PX, prefix = 'p' } = {}) {
+export function buildModel(spec, { atlas, px = PX, prefix = 'p', centre = true } = {}) {
   const root = document.createElement('div');
   root.className = 'mc-model';
+
+  // The game measures a mob from the ground under its feet, so a cod's parts
+  // all sit twenty-two units below the origin. Left alone the model would hang
+  // that far below wherever it is placed; centring makes the anchor the mob.
+  const c = centre ? bounds(spec) : [0, 0, 0];
 
   for (const part of spec) {
     const [bx, by, bz, w, h, d] = part.box;
@@ -99,7 +134,7 @@ export function buildModel(spec, { atlas, px = PX, prefix = 'p' } = {}) {
     const pivot = document.createElement('div');
     pivot.className = `mc-group ${prefix}-${part.name}`;
     pivot.style.transform =
-      `translate3d(${px_ * px}px, ${py * px}px, ${pz * px}px)` +
+      `translate3d(${(px_ - c[0]) * px}px, ${(py - c[1]) * px}px, ${(pz - c[2]) * px}px)` +
       (rz ? ` rotateZ(${rz}deg)` : '') +
       (ry ? ` rotateY(${ry}deg)` : '') +
       (rx ? ` rotateX(${rx}deg)` : '');
@@ -107,9 +142,10 @@ export function buildModel(spec, { atlas, px = PX, prefix = 'p' } = {}) {
     // replacing it and snapping the part back to the origin.
     pivot.style.setProperty('--rest', pivot.style.transform);
 
-    // addBox gives a corner; the renderer wants the centre.
-    const centre = [bx + w / 2, by + h / 2, bz + d / 2];
-    pivot.appendChild(cuboid(part.uv, [w, h, d], centre, { atlas, px }));
+    // addBox gives a corner; the renderer wants the middle of the box.
+    const mid = [bx + w / 2, by + h / 2, bz + d / 2];
+    pivot.appendChild(cuboid(part.uv, [w, h, d], mid,
+      { atlas, px, explicit: part.faces || null }));
     root.appendChild(pivot);
   }
   return root;
