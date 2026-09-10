@@ -205,12 +205,6 @@ body {
   font-weight: var(--w-bold);
   letter-spacing: -0.04em;
   line-height: 0.94;
-  /* The sea runs behind the title, so it carries its own bit of depth to sit
-     against — otherwise a passing squid muddies the letterforms. */
-  text-shadow: 0 2px 20px color-mix(in srgb, var(--bg-void) 55%, transparent);
-}
-:root[data-theme="bone"] .head h1 {
-  text-shadow: 0 2px 18px color-mix(in srgb, var(--bg-base) 80%, transparent);
 }
 .head h1 em { font-style: normal; color: var(--accent); }
 

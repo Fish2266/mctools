@@ -47,9 +47,11 @@ const FRY   = squidSpec({ bw: 8,  bh: 10, tw: 2, th: 6,  ring: 3.4, tentUv: [0, 
 
      body  texOffs(0,0)  2x4x7  -> x7-11 y0-7, plus the band x0-18 y7-11
      head  texOffs(11,0) 2x4x3  -> x14-18 y0-3, plus the band x11-21 y3-7
-     tail  a solid 6x4 fan at x0-6 y0-4, tucked into the corner the body's own
-           unwrap leaves empty. No texOffs lands a face there, so the patch is
-           named outright instead of guessed at.
+     tail  a 6x5 fan at x0-5 y0-5, tucked into the corner the body's own unwrap
+           leaves empty. Only a zero-depth plane at texOffs(0,0) lands a face
+           there, so the patch is named outright instead of guessed at. Its
+           bottom row is transparent, which is what makes the fin stand proud
+           of the body's top edge instead of continuing it as a flat bar.
      fins  texOffs(24,0) and (24,4), 2x0x2 each -> the little 2x2s at x26-28
 
    texOffs(20,0) looks like a fin and is where the game keeps one, but in this
@@ -60,8 +62,8 @@ const FRY   = squidSpec({ bw: 8,  bh: 10, tw: 2, th: 6,  ring: 3.4, tentUv: [0, 
 const COD = [
   { name: 'body', uv: [0, 0],  box: [-1, -2, 0, 2, 4, 7],  pos: [0, 22, 0] },
   { name: 'head', uv: [11, 0], box: [-1, -2, -3, 2, 4, 3], pos: [0, 22, 0] },
-  { name: 'tail', box: [0, -2, 0, 0, 4, 6], pos: [0, 22, 7],
-    faces: { left: [0, 0, 6, 4] } },
+  { name: 'tail', box: [0, -2.5, 0, 0, 5, 6], pos: [0, 22, 7],
+    faces: { left: [0, 0, 6, 5] } },
   { name: 'finR', uv: [24, 0], box: [-2, 0, 0, 2, 0, 2], pos: [-1, 23, 1], rot: [0, 0, -35] },
   { name: 'finL', uv: [24, 4], box: [0, 0, 0, 2, 0, 2],  pos: [1, 23, 1],  rot: [0, 0, 35] },
 ];
