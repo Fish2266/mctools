@@ -32,7 +32,7 @@ export const FACES = [
 /* One textured quad. `uvSize` is how big the patch is in the texture; `size` is
    how big it is on screen. Keeping the two separate is what lets a 16x16 block
    texture stretch across a 22-unit cube while a skin stays pixel-for-pixel. */
-function face({ box, atlas, uv, uvSize, size, side, flat }) {
+function face({ box, atlas, uv, uvSize, size, side, flat, mirror }) {
   const el = document.createElement('i');
   el.className = 'mc-face';
   el.dataset.side = side;          // CSS shades top/side/bottom like the game
@@ -48,7 +48,10 @@ function face({ box, atlas, uv, uvSize, size, side, flat }) {
   el.style.backgroundPosition = `${-uv[0] * sx}px ${-uv[1] * sy}px`;
   el.style.marginLeft = `${-fw / 2}px`;
   el.style.marginTop = `${-fh / 2}px`;
-  el.style.transform = box;
+  // The game's own CubeListBuilder.mirror(), which flips a part's faces along
+  // its length — how one texture patch serves a left and a right fin, or how a
+  // fin whose art is drawn tip-first gets hung on the body the right way round.
+  el.style.transform = box + (mirror ? ' scaleX(-1)' : '');
   return el;
 }
 
@@ -58,7 +61,7 @@ function face({ box, atlas, uv, uvSize, size, side, flat }) {
    on all six sides, and how a part whose layout had to be read off the texture
    gets pointed at the right rectangle. */
 export function cuboid(uvOrigin, dim, offset, {
-  atlas = [64, 64], explicit = null, px = PX, cls = '',
+  atlas = [64, 64], explicit = null, px = PX, cls = '', mirror = false,
 } = {}) {
   const [w, h, d] = dim;
   const el = document.createElement('div');
@@ -90,7 +93,7 @@ export function cuboid(uvOrigin, dim, offset, {
     }
     el.appendChild(face({
       box: f.xf(w * px, h * px, d * px),
-      atlas, uv, uvSize, size: [fw * px, fh * px], side: f.key, flat,
+      atlas, uv, uvSize, size: [fw * px, fh * px], side: f.key, flat, mirror,
     }));
   }
   return el;
@@ -119,7 +122,8 @@ function bounds(spec) {
    `faces` may override `uv` for some or all faces with an explicit
    [u, v, w, h] patch; anything it leaves out falls back to the unwrap.
    `box` is addBox — a corner and a size. `pos` is the part's pivot, `rot` its
-   resting rotation in degrees. Each part becomes a pivot div (which animation
+   resting rotation in degrees, and `mirror` flips its faces the way the game's
+   own mirror() does. Each part becomes a pivot div (which animation
    can rotate freely) holding one cuboid. */
 export function buildModel(spec, { atlas, px = PX, prefix = 'p', centre = true } = {}) {
   const root = document.createElement('div');
@@ -149,7 +153,7 @@ export function buildModel(spec, { atlas, px = PX, prefix = 'p', centre = true }
     // addBox gives a corner; the renderer wants the middle of the box.
     const mid = [bx + w / 2, by + h / 2, bz + d / 2];
     pivot.appendChild(cuboid(part.uv, [w, h, d], mid,
-      { atlas, px, explicit: part.faces || null }));
+      { atlas, px, explicit: part.faces || null, mirror: !!part.mirror }));
     root.appendChild(pivot);
   }
   return root;

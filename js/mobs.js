@@ -42,30 +42,40 @@ const SQUID = squidSpec({ bw: 12, bh: 16, tw: 2, th: 18, ring: 5,   tentUv: [48,
 const FRY   = squidSpec({ bw: 8,  bh: 10, tw: 2, th: 6,  ring: 3.4, tentUv: [0, 18], hang: 9 });
 
 /* ---- Cod ----------------------------------------------------------------
-   Read off cod.png rather than remembered. Dumping the texture's alpha channel
-   shows where the paint actually is, which settles what each part can be:
+   Read off cod.png's alpha channel rather than remembered. Every painted
+   region is some part's unwrap landing on it:
 
-     body  texOffs(0,0)  2x4x7  -> x7-11 y0-7, plus the band x0-18 y7-11
-     head  texOffs(11,0) 2x4x3  -> x14-18 y0-3, plus the band x11-21 y3-7
-     tail  a 6x5 fan at x0-5 y0-5, tucked into the corner the body's own unwrap
-           leaves empty. Only a zero-depth plane at texOffs(0,0) lands a face
-           there, so the patch is named outright instead of guessed at. Its
-           bottom row is transparent, which is what makes the fin stand proud
-           of the body's top edge instead of continuing it as a flat bar.
-     fins  texOffs(24,0) and (24,4), 2x0x2 each -> the little 2x2s at x26-28
+     body    texOffs(0,0)  2x4x7  -> x7-11 y0-7, plus the band x0-18 y7-11
+     head    texOffs(11,0) 2x4x3  -> x14-18 y0-3, plus the band x11-21 y3-7
+     tail    texOffs(22,3) 0x4x4  -> the painted half of the pair, x26-30 y7-11
+     fins    texOffs(24,0) and (24,4), 2x0x2 -> the 2x2s at x26-28
+     dorsal  a 6x4 patch at x0-6 y0-4, in the corner the body's own unwrap
+             leaves empty. Only a zero-depth plane at texOffs(0,0) reaches it,
+             so it is named outright rather than guessed at.
 
-   texOffs(20,0) looks like a fin and is where the game keeps one, but in this
-   pack that patch is all but blank, so nothing is hung on it.
+   The tail patch is the forked one — a narrow stalk with a prong above and
+   below, which is the Y the fish actually has:
+
+       ..##      and it is drawn tip-first, so the part is mirrored to hang
+       ###.      the stalk on the body rather than the fork.
+       ###.
+       ..##
+
+   The dorsal reads as a solid slab shading from dark to pale because most of
+   it is inside the fish: sitting at y20 against a body spanning y20-24, only
+   its top two rows ever show. Mistaking that slab for the tail is what made
+   the cod a featureless bar.
 
    A fin is a box with one dimension zero, which is how the game draws flat
    parts; model.js turns each into a single double-sided quad. */
 const COD = [
-  { name: 'body', uv: [0, 0],  box: [-1, -2, 0, 2, 4, 7],  pos: [0, 22, 0] },
-  { name: 'head', uv: [11, 0], box: [-1, -2, -3, 2, 4, 3], pos: [0, 22, 0] },
-  { name: 'tail', box: [0, -2.5, 0, 0, 5, 6], pos: [0, 22, 7],
-    faces: { left: [0, 0, 6, 5] } },
-  { name: 'finR', uv: [24, 0], box: [-2, 0, 0, 2, 0, 2], pos: [-1, 23, 1], rot: [0, 0, -35] },
-  { name: 'finL', uv: [24, 4], box: [0, 0, 0, 2, 0, 2],  pos: [1, 23, 1],  rot: [0, 0, 35] },
+  { name: 'body',   uv: [0, 0],  box: [-1, -2, 0, 2, 4, 7],  pos: [0, 22, 0] },
+  { name: 'head',   uv: [11, 0], box: [-1, -2, -3, 2, 4, 3], pos: [0, 22, 0] },
+  { name: 'dorsal', box: [0, -2, 0, 0, 4, 6], pos: [0, 20, 0],
+    faces: { left: [0, 0, 6, 4] } },
+  { name: 'tail',   uv: [22, 3], box: [0, -2, 0, 0, 4, 4], pos: [0, 22, 7], mirror: true },
+  { name: 'finR',   uv: [24, 0], box: [-2, 0, 0, 2, 0, 2], pos: [-1, 23, 1], rot: [0, 0, -35] },
+  { name: 'finL',   uv: [24, 4], box: [0, 0, 0, 2, 0, 2],  pos: [1, 23, 1],  rot: [0, 0, 35] },
 ];
 
 /* Salmon and dolphin are deliberately absent. Their textures are here in the
