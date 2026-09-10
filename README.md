@@ -1,7 +1,13 @@
 # Fish's MC Tools
 
 The landing page for three browser tools for Minecraft, at
-**<https://fish2266.github.io>**.
+**<https://fish2266.github.io/mctools>**.
+
+It deploys as a project site rather than the user site, so
+`fish2266.github.io` itself stays free for whatever goes there. Nothing in
+the page assumes it is served from the root — every path is relative and the
+scripts resolve theirs against `document.baseURI` — so it would work at the
+root too if that ever changes.
 
 One screen: the name, the character, and the three tools.
 
@@ -85,10 +91,15 @@ uses ES modules.
 
 ## Deploying
 
-Pushing to `main` on `Fish2266/Fish2266.github.io` publishes to
-<https://fish2266.github.io>. GitHub Pages needs the repo to be named exactly
-`<username>.github.io`, and Pages set to deploy from the `main` branch, root.
-`.nojekyll` is there so Pages serves the files as they are.
+Pushing to `main` on `Fish2266/mctools` publishes to
+<https://fish2266.github.io/mctools>, with Pages set to deploy from the
+`main` branch, root. `.nojekyll` is there so Pages serves the files as they
+are rather than running them through Jekyll.
+
+The working copy is still in a folder called `Fish2266.github.io`, which is a
+leftover from when this was going to be the user site. Only the repository
+name decides the URL, so the folder name costs nothing but is worth renaming
+if it ever confuses.
 
 ---
 
