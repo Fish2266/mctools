@@ -169,9 +169,18 @@ function spawn(kind, rnd, base) {
 }
 
 export function sealife(host, base = 'assets/') {
-  // Squid first — this is a squid's website — then enough fish to feel alive
-  // without turning the background into an aquarium shop.
-  const cast = ['squid', 'cod', 'glow', 'cod', 'fry', 'squid', 'cod', 'fry', 'glow'];
+  /* Who is in the water. Cod are finished and correct — forked tail, the low
+     dorsal ridge, pectoral fins — but they are benched for now. Take 'cod'
+     out of BENCHED to swim them again; nothing else has to change. */
+  const BENCHED = new Set(['cod']);
+
+  const CAST = ['squid', 'cod', 'glow', 'cod', 'fry', 'squid', 'cod', 'fry', 'glow'];
+  // A benched kind hands its slot to a stand-in rather than leaving a hole, so
+  // the water stays as busy as the cast asks for.
+  const SUBS = ['glow', 'squid', 'fry'];
+  let sub = 0;
+  const cast = CAST.map(k => (BENCHED.has(k) ? SUBS[sub++ % SUBS.length] : k));
+
   const rnd = shuffled(Date.now() & 0xffff);
   const frag = document.createDocumentFragment();
   for (const kind of cast) {
