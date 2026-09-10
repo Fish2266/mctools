@@ -10,24 +10,36 @@ import { buildModel } from './model.js';
 const TAU = Math.PI * 2;
 
 /* ---- Squid --------------------------------------------------------------
-   One fat body and eight tentacles on a ring of radius 5, each turned to face
-   outward. Exactly the model the game builds. */
-function squidSpec() {
+   One fat body and eight tentacles on a ring, each turned to face outward —
+   the model the game builds. A baby squid is not the adult scaled down: it
+   ships its own 32x32 texture with its own smaller boxes, and its tentacles
+   are kept somewhere else in the sheet entirely. Both layouts were read off
+   the textures' alpha channels:
+
+     adult  64x32  body 12x16x12 at (0,0), tentacle 2x18x2 at (48,0)
+     baby   32x32  body  8x10x8  at (0,0), tentacle 2x6x2  at (0,18)
+
+   Handing the adult's layout to the baby is what tore its texture apart. */
+function squidSpec({ bw, bh, tw, th, ring, tentUv, hang }) {
   const parts = [
-    { name: 'body', uv: [0, 0], box: [-6, -8, -6, 12, 16, 12], pos: [0, 8, 0] },
+    { name: 'body', uv: [0, 0], pos: [0, bh / 2, 0],
+      box: [-bw / 2, -bh / 2, -bw / 2, bw, bh, bw] },
   ];
   for (let i = 0; i < 8; i++) {
     const a = (i * TAU) / 8;
     parts.push({
       name: `t${i}`,
-      uv: [48, 0],
-      box: [-1, 0, -1, 2, 18, 2],
-      pos: [Math.cos(a) * 5, 15, Math.sin(a) * 5],
+      uv: tentUv,
+      box: [-tw / 2, 0, -tw / 2, tw, th, tw],
+      pos: [Math.cos(a) * ring, hang, Math.sin(a) * ring],
       rot: [0, (a * 180) / Math.PI + 90, 0],
     });
   }
   return parts;
 }
+
+const SQUID = squidSpec({ bw: 12, bh: 16, tw: 2, th: 18, ring: 5,   tentUv: [48, 0], hang: 15 });
+const FRY   = squidSpec({ bw: 8,  bh: 10, tw: 2, th: 6,  ring: 3.4, tentUv: [0, 18], hang: 9 });
 
 /* ---- Cod ----------------------------------------------------------------
    Read off cod.png rather than remembered. Dumping the texture's alpha channel
@@ -58,9 +70,9 @@ const COD = [
    pack, but their part layouts are Java, not data, and a guessed dolphin looks
    like a guessed dolphin. Add them the moment there is a model to copy. */
 export const MODELS = {
-  squid:  { spec: squidSpec(), atlas: [64, 32], texture: 'squid.png',      px: 3.4, swim: 'squid' },
-  glow:   { spec: squidSpec(), atlas: [64, 32], texture: 'glow_squid.png', px: 3.2, swim: 'squid' },
-  fry:    { spec: squidSpec(), atlas: [64, 32], texture: 'squid_baby.png', px: 2.6, swim: 'squid' },
+  squid:  { spec: SQUID, atlas: [64, 32], texture: 'squid.png',      px: 3.4, swim: 'squid' },
+  glow:   { spec: SQUID, atlas: [64, 32], texture: 'glow_squid.png', px: 3.2, swim: 'squid' },
+  fry:    { spec: FRY,   atlas: [32, 32], texture: 'squid_baby.png', px: 3.6, swim: 'squid' },
   cod:    { spec: COD,         atlas: [32, 32], texture: 'cod.png',        px: 6.0, swim: 'fish'  },
 };
 
@@ -114,16 +126,15 @@ function spawn(kind, rnd, base) {
   /* The pulse. A squid holds still, fans its tentacles wide, then snaps them
      shut — and it is the snap that moves it.
 
-     --surge is how far ahead of its lane one stroke throws it. The lane takes
-     that distance back over the glide, so the size has to stay under what the
-     lane itself covers in that time or a slow squid would visibly slide
-     backwards while coasting. Measuring it in vw, the same unit as the lane,
-     keeps the relationship true at any window width: the lane crosses 136vw in
-     `secs`, the glide is the back 48% of a pulse, and taking 55% of the ground
-     the lane makes in that window leaves the squid always net forward. */
+     --surge is the full swing of that gap. Integrating the game's velocity
+     profile over one pulse — a quarter of average speed while it fans, near
+     three times average on the snap, then a 0.9-per-tick decay — gives a swing
+     of 0.396 times the ground the lane itself covers in a pulse. Measuring it
+     in vw, the lane's own unit, keeps that true at any window width: the lane
+     crosses 136vw in `secs`. */
   if (squid) {
     const pulse = 2.5 + rnd() * 1.4;
-    const surge = 0.55 * 136 * 0.48 * pulse / secs;
+    const surge = 0.396 * 136 * pulse / secs;
     lane.style.setProperty('--pulse', `${pulse.toFixed(2)}s`);
     lane.style.setProperty('--surge', `${(dir * surge).toFixed(2)}vw`);
     lane.style.setProperty('--pulse-delay', `${(-rnd() * pulse).toFixed(2)}s`);

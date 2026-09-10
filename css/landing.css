@@ -119,33 +119,50 @@ body {
 .mob .mc-face { background-image: var(--mob-url); }
 
 /* ---- The squid's stroke --------------------------------------------------
-   Squid.aiStep runs the tentacles through half a cycle and then rests them for
-   the other half: the angle follows sin(f²·π), so it peaks about seven tenths
-   of the way through the stroke, and the game only applies thrust once f has
-   passed 0.75 — that is, while the tentacles are closing again. So the squid
-   fans, snaps shut, is thrown forward by the snap, and then coasts with its
-   tentacles trailing until the next one. */
+   Straight out of Squid.aiStep. Over the front half of a pulse the tentacle
+   angle is sin(f²·π): a slow open, a fast rise, a peak just past seven tenths,
+   then a hard snap shut. Over the back half it is flat zero and the squid
+   coasts. The keyframes below are that function sampled, so they interpolate
+   linearly rather than being eased into a rough approximation of it. */
 .mob-squid [class*="-t"] {
-  animation: tentacle var(--pulse) var(--pulse-delay) infinite;
+  animation: tentacle var(--pulse) linear var(--pulse-delay) infinite;
 }
 @keyframes tentacle {
-  0%   { transform: var(--rest) rotateX(4deg);  animation-timing-function: ease-out; }
-  35%  { transform: var(--rest) rotateX(46deg); animation-timing-function: cubic-bezier(.75, 0, .9, .2); }
-  50%  { transform: var(--rest) rotateX(4deg);  animation-timing-function: linear; }
-  100% { transform: var(--rest) rotateX(4deg); }
+  0%    { transform: var(--rest) rotateX(4deg); }
+  12.5% { transform: var(--rest) rotateX(12deg); }
+  25%   { transform: var(--rest) rotateX(34deg); }
+  35%   { transform: var(--rest) rotateX(46deg); }   /* f = 0.707, the peak */
+  42.5% { transform: var(--rest) rotateX(36deg); }
+  46.5% { transform: var(--rest) rotateX(21deg); }
+  50%   { transform: var(--rest) rotateX(4deg); }    /* shut */
+  100%  { transform: var(--rest) rotateX(4deg); }    /* and held, coasting */
 }
 
-/* Ahead of the lane on the snap, then handed back over the long glide. The
-   lane always outruns the give-back, so the squid never slides backwards. */
+/* And the travel that goes with it. The game gives the squid full speed only
+   once f passes 0.75 — while the tentacles are closing — and then multiplies
+   its speed by 0.9 every tick for the rest of the cycle. So it barely moves
+   while it fans, is thrown forward by the snap, and slows to a drift.
+
+   The lane carries the average speed, so what is animated here is the gap:
+   falling behind through the fan, overtaking hard on the snap, then handed
+   back as it coasts. Integrating that velocity profile over one pulse gives
+   the four positions below, in fractions of --surge. The steepest give-back
+   is three quarters of the lane's own speed, so the squid always nets
+   forward and never slides backwards. */
 .swimmer[data-kind="squid"] .lurch,
 .swimmer[data-kind="glow"] .lurch,
 .swimmer[data-kind="fry"] .lurch {
-  animation: surge var(--pulse) var(--pulse-delay) infinite;
+  animation: surge var(--pulse) linear var(--pulse-delay) infinite;
 }
 @keyframes surge {
-  0%, 37% { transform: translateX(0);           animation-timing-function: cubic-bezier(.1, .7, .3, 1); }
-  52%     { transform: translateX(var(--surge)); animation-timing-function: linear; }
-  100%    { transform: translateX(0); }
+  0%    { transform: translateX(0); }
+  37.5% { transform: translateX(calc(var(--surge) * -0.71));
+          animation-timing-function: linear; }              /* the snap begins */
+  50%   { transform: translateX(calc(var(--surge) * -0.11));
+          animation-timing-function: cubic-bezier(.14, .7, .4, 1); }
+  71%   { transform: translateX(calc(var(--surge) * 0.29));  /* still overtaking */
+          animation-timing-function: cubic-bezier(.36, 0, .72, .85); }
+  100%  { transform: translateX(0); }
 }
 
 /* A fish just beats its tail. */
