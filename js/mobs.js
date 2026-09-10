@@ -61,17 +61,18 @@ const FRY   = squidSpec({ bw: 8,  bh: 10, tw: 2, th: 6,  ring: 3.4, tentUv: [0, 
        ###.
        ..##
 
-   The dorsal reads as a solid slab shading from dark to pale because most of
-   it is inside the fish: sitting at y20 against a body spanning y20-24, only
-   its top two rows ever show. Mistaking that slab for the tail is what made
-   the cod a featureless bar.
+   The dorsal reads as a solid slab shading from dark to pale because nearly
+   all of it is inside the fish. Sitting at y21 against a body spanning y20-24,
+   only its top row clears the back — and that row is `.####.`, so what shows
+   is a ridge one high and four long with a gap at either end. Mistaking that
+   slab for the tail is what made the cod a featureless bar.
 
    A fin is a box with one dimension zero, which is how the game draws flat
    parts; model.js turns each into a single double-sided quad. */
 const COD = [
   { name: 'body',   uv: [0, 0],  box: [-1, -2, 0, 2, 4, 7],  pos: [0, 22, 0] },
   { name: 'head',   uv: [11, 0], box: [-1, -2, -3, 2, 4, 3], pos: [0, 22, 0] },
-  { name: 'dorsal', box: [0, -2, 0, 0, 4, 6], pos: [0, 20, 0],
+  { name: 'dorsal', box: [0, -2, 0, 0, 4, 6], pos: [0, 21, 0],
     faces: { left: [0, 0, 6, 4] } },
   { name: 'tail',   uv: [22, 3], box: [0, -2, 0, 0, 4, 4], pos: [0, 22, 7], mirror: true },
   { name: 'finR',   uv: [24, 0], box: [-2, 0, 0, 2, 0, 2], pos: [-1, 23, 1], rot: [0, 0, -35] },
