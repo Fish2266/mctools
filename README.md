@@ -15,7 +15,7 @@ One screen: the name, the character, and the three tools.
 | --- | --- | --- |
 | [Frame & Groove](https://fish2266.github.io/frame-and-groove/) | Live | Paintings, music discs, mob variants and item textures → data pack + resource pack |
 | Fish's Wardrobe | Coming | Skin editor |
-| All The Sounds | Coming | Record a replacement for every sound in the game → resource pack |
+| [All The Sounds](https://fish2266.github.io/all-the-sounds/) | Live | Record a replacement for every sound in the game → resource pack |
 
 Static HTML, CSS and ES modules. No build step, no dependencies, nothing to
 install. Open `index.html` over any local server and it runs.
