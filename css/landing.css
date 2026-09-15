@@ -374,10 +374,10 @@ a.tool:hover .tool-foot svg { transform: translateX(3px); }
 
 /* Accent per tool, borrowed from the studio's own domain scoping. */
 .tool[data-tool="frame"]    { --accent: var(--emerald-400); }
-.tool[data-tool="wardrobe"] { --accent: var(--amber-400); }
+.tool[data-tool="slicer"]   { --accent: var(--amber-400); }
 .tool[data-tool="sounds"]   { --accent: var(--amethyst-400); }
 :root[data-theme="bone"] .tool[data-tool="frame"]    { --accent: var(--emerald-600); }
-:root[data-theme="bone"] .tool[data-tool="wardrobe"] { --accent: var(--amber-600); }
+:root[data-theme="bone"] .tool[data-tool="slicer"]   { --accent: var(--amber-600); }
 :root[data-theme="bone"] .tool[data-tool="sounds"]   { --accent: var(--amethyst-600); }
 
 /* ======================= LEGAL ========================================== */
