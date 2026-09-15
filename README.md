@@ -14,7 +14,7 @@ One screen: the name, the character, and the three tools.
 | Tool | State | What it is |
 | --- | --- | --- |
 | [Frame & Groove](https://fish2266.github.io/frame-and-groove/) | Live | Paintings, music discs, mob variants and item textures → data pack + resource pack |
-| Fish's Wardrobe | Coming | Skin editor |
+| [Skin Slicer](https://fish2266.github.io/skinslicer/) | Live | A base skin, items worn over it and tinted colour by colour, outfits you can swap → a skin PNG |
 | [All The Sounds](https://fish2266.github.io/all-the-sounds/) | Live | Record a replacement for every sound in the game → resource pack |
 
 Static HTML, CSS and ES modules. No build step, no dependencies, nothing to

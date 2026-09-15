@@ -20,9 +20,12 @@ export function water(canvas, src) {
   let frame = 0;
   let dpr = 1;
   let timer = 0;
+  let resizing = false;
+
+  const currentDpr = () => Math.min(devicePixelRatio || 1, 2);
 
   function bake() {
-    dpr = Math.min(devicePixelRatio || 1, 2);
+    dpr = currentDpr();
     const side = TILE * SCALE * dpr;
     patterns = [];
     for (let f = 0; f < FRAMES; f++) {
@@ -55,11 +58,22 @@ export function water(canvas, src) {
   img.onload = () => {
     bake();
     size();
-    addEventListener('resize', () => { bake(); size(); }, { passive: true });
+    /* Resize fires dozens of times a second during a drag. The tiles only
+       depend on the pixel ratio, so they are rebaked only when that changes
+       (a move to another screen) and the canvas is resized once a frame. */
+    addEventListener('resize', () => {
+      if (resizing) return;
+      resizing = true;
+      requestAnimationFrame(() => {
+        resizing = false;
+        if (currentDpr() !== dpr) bake();
+        size();
+      });
+    }, { passive: true });
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       timer = setInterval(() => { frame = (frame + 1) % FRAMES; paint(); }, MS);
     }
-    // A hidden tab does not need thirty-two frames a second of nothing.
+    // A hidden tab does not need ten frames a second of nothing.
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { clearInterval(timer); timer = 0; }
       else if (!timer && !matchMedia('(prefers-reduced-motion: reduce)').matches) {

@@ -3,9 +3,14 @@ import { water } from './water.js';
 import { sealife } from './mobs.js';
 
 /* Two themes, the same pair the studio uses. There is no toggle on this page,
-   so it follows the system. */
-document.documentElement.dataset.theme =
-  matchMedia('(prefers-color-scheme: light)').matches ? 'bone' : 'deepslate';
+   so it follows the system — including when the system changes while the
+   page is open. */
+const lightScheme = matchMedia('(prefers-color-scheme: light)');
+const applyTheme = () => {
+  document.documentElement.dataset.theme = lightScheme.matches ? 'bone' : 'deepslate';
+};
+applyTheme();
+lightScheme.addEventListener('change', applyTheme);
 
 const sea = document.getElementById('sea');
 if (sea) water(sea, 'assets/water.png');

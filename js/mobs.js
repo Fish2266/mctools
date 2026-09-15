@@ -89,8 +89,8 @@ export const MODELS = {
   cod:    { spec: COD,         atlas: [32, 32], texture: 'cod.png',        px: 6.0, swim: 'fish'  },
 };
 
-/* Deterministic noise, so the scene is arranged rather than merely random and
-   two reloads do not put every fish in the same place. */
+/* Seeded noise: one seed per page load, so a single load is arranged from one
+   consistent stream, and two reloads do not put every fish in the same place. */
 function shuffled(seed) {
   let s = seed >>> 0;
   return () => {
