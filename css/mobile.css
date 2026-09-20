@@ -1,0 +1,80 @@
+/* ============================================================================
+   FISH'S MC TOOLS — phone layer (iOS portrait)
+   Loaded last, over tokens / base / components / landing.
+   ========================================================================= */
+
+/* ---- Touch ---------------------------------------------------------------
+   The lift on a tool card is a hover effect, so on a phone it latches on after
+   a tap and stays until you tap something else. */
+@media (hover: none) {
+  a.tool:hover { transform: none; box-shadow: var(--bevel), 0 0 0 1px var(--line-soft), var(--sh-2); }
+  a.tool:hover .tool-foot svg { transform: none; }
+  a.tool:active {
+    transform: scale(0.985);
+    box-shadow: var(--bevel), 0 0 0 1px color-mix(in srgb, var(--accent) 34%, var(--line)), var(--sh-2);
+  }
+}
+@media (pointer: coarse) {
+  * { -webkit-tap-highlight-color: transparent; }
+  .tool, .head h1 { -webkit-user-select: none; user-select: none; }
+}
+
+/* ---- Safe area -----------------------------------------------------------
+   viewport-fit=cover puts the page under the status bar and the home
+   indicator. The prismarine frame is meant to run to the edge; the text is
+   not. */
+@media (max-width: 720px) {
+  body {
+    padding-left: calc(var(--reef) + var(--s-4) + env(safe-area-inset-left));
+    padding-right: calc(var(--reef) + var(--s-4) + env(safe-area-inset-right));
+  }
+  .page {
+    padding-top: calc(var(--reef) + var(--s-6) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--reef) + var(--s-6) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---- Head ----------------------------------------------------------------
+   Stacked, the character sits above the wordmark. The model is drawn at a
+   fixed pixel size from the stage's centre and is about 307px tall, so a
+   230x265 stage was not tall enough to hold it — the block he stands on
+   landed on top of "MC Tools". Give the stage the height the model needs. */
+@media (max-width: 720px) {
+  .head { gap: var(--s-5); }
+  .mc-stage { max-width: 250px; aspect-ratio: 1 / 1.5; }
+  /* The pool follows the stage, so pin it back under his feet. */
+  .mc-stage::after { bottom: 7%; width: 180px; }
+  .head h1 { font-size: clamp(42px, 12.5vw, 64px); }
+}
+
+/* ---- Tools ---------------------------------------------------------------
+   One column below 560px; the auto-fit grid would otherwise hold a 228px
+   minimum that leaves the cards cramped. */
+@media (max-width: 560px) {
+  .page { gap: var(--s-6); justify-content: flex-start; }
+  .tools { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
+  .tool { padding: var(--s-4) var(--s-4) var(--s-4); }
+  .tool h2 { font-size: var(--t-16); }
+  .tool ul.bullets { margin-top: var(--s-3); gap: 6px; }
+  .tool ul.bullets li { font-size: var(--t-13); }
+  .tool-foot { padding-top: var(--s-4); min-height: 24px; }
+  .legal { padding-inline: var(--s-2); line-height: 1.5; }
+}
+
+/* Small phones (iPhone SE / mini). */
+@media (max-width: 380px) {
+  :root { --reef: 12px; }
+  .mc-stage { max-width: 210px; }
+  .head h1 { font-size: 40px; }
+}
+
+/* ---- Landscape -----------------------------------------------------------
+   ~390pt of height: the centred one-screen layout has nowhere to put a 307px
+   character, so lay the head out side by side again and let the page scroll. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .page { justify-content: flex-start; gap: var(--s-5); min-height: 0; }
+  .head { grid-template-columns: minmax(0, 1fr) minmax(0, 260px); text-align: left; justify-items: stretch; }
+  .head h1 { order: 0; }
+  .mc-stage { justify-self: end; max-width: 220px; aspect-ratio: 1 / 1.5; }
+  .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
