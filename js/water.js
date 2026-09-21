@@ -61,7 +61,7 @@ export function water(canvas, src) {
     /* Resize fires dozens of times a second during a drag. The tiles only
        depend on the pixel ratio, so they are rebaked only when that changes
        (a move to another screen) and the canvas is resized once a frame. */
-    addEventListener('resize', () => {
+    const onResize = () => {
       if (resizing) return;
       resizing = true;
       requestAnimationFrame(() => {
@@ -69,7 +69,15 @@ export function water(canvas, src) {
         if (currentDpr() !== dpr) bake();
         size();
       });
-    }, { passive: true });
+    };
+    addEventListener('resize', onResize, { passive: true });
+    /* The canvas is inside a `position: fixed; inset: 0` layer, so its box
+       grows when iOS slides its toolbars away — and iOS does that without
+       firing `resize` on the window. Without this the water stays painted at
+       the old height and leaves a bare band along the bottom. */
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', onResize, { passive: true });
+    }
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       timer = setInterval(() => { frame = (frame + 1) % FRAMES; paint(); }, MS);
     }

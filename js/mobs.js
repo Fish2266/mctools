@@ -174,7 +174,14 @@ export function sealife(host, base = 'assets/') {
      out of BENCHED to swim them again; nothing else has to change. */
   const BENCHED = new Set(['cod']);
 
-  const CAST = ['squid', 'cod', 'glow', 'cod', 'fry', 'squid', 'cod', 'fry', 'glow'];
+  /* Every swimmer is a few dozen 3D-transformed faces carrying their own
+     animation. Nine of them is around 490 composited quads, and a phone shows
+     a narrow slice of that water at a time — so it pays the whole cost and
+     sees almost none of it. Narrow screens get a shorter cast that still has
+     one of each kind in it. */
+  const FULL = ['squid', 'cod', 'glow', 'cod', 'fry', 'squid', 'cod', 'fry', 'glow'];
+  const SHORT = ['squid', 'glow', 'fry'];
+  const CAST = matchMedia('(max-width: 620px)').matches ? SHORT : FULL;
   // A benched kind hands its slot to a stand-in rather than leaving a hole, so
   // the water stays as busy as the cast asks for.
   const SUBS = ['glow', 'squid', 'fry'];
