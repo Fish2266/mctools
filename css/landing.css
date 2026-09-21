@@ -7,7 +7,16 @@
 /* The studio locks the document to one screen; this page may need a nudge of
    scroll. `overflow` has to stay `visible` — any other value makes the body its
    own scroll container, which strands fixed children at document coordinates. */
-html { overflow-x: clip; }
+html {
+  overflow-x: clip;
+  /* iOS fills the strips behind the status bar and the toolbar from the root's
+     background-colour. base.css sets that to --bg-base, which is near-black in
+     the dark theme, so the scene sat between two black bands. The dark
+     prismarine frame is what actually runs to the edge of the page in both
+     themes — this is its average colour, so the frame reads as carrying on
+     past the screen instead of stopping dead. */
+  background-color: #345c4c;
+}
 html, body { height: auto; }
 body {
   overflow: visible;
