@@ -35,7 +35,13 @@
     <div id="scrim"></div>
     <div id="life"></div>
   </div>
-  <div id="reef" aria-hidden="true"></div>
+  <!-- The frame is four bars rather than one box, so each can run well past its
+       edge of the screen — behind the Dynamic Island, behind the toolbar, out
+       into the rounded corners — while the window between them stays put. -->
+  <div id="reef" aria-hidden="true">
+    <i class="reef-t"></i><i class="reef-b"></i><i class="reef-l"></i><i class="reef-r"></i>
+    <i class="reef-edge"></i>
+  </div>
 
   <main class="page">
     <header class="head">

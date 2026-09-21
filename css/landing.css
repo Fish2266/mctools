@@ -30,11 +30,19 @@ body {
 /* ======================= THE SEA ======================================== */
 /* Layers, back to front: animated water, the mobs swimming through it, a scrim
    so the page reads, and a dark prismarine frame around the lot. */
-:root { --reef: 32px; }   /* a dark prismarine block at 2x */
+:root { --reef: 32px; --overscan: 0px; }   /* a dark prismarine block at 2x */
+/* How far the frame runs past each edge of the screen. iOS paints the page
+   behind the status bar and the glass toolbar, so a frame that stops at the
+   screen edge leaves the page showing around it. 240 is a whole number of
+   tiles at both 16px and 12px. */
+@media (pointer: coarse) { :root { --overscan: 240px; } }
 @media (max-width: 720px) { :root { --reef: 16px; } }
 
 #ocean {
-  position: fixed; inset: 0;
+  /* Same reason as the frame: a fixed height, so the water does not resize and
+     repaint every time the toolbar moves. */
+  position: fixed; left: 0; right: 0; top: 0;
+  height: 100vh; height: 100lvh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
@@ -62,20 +70,50 @@ body {
 /* One element, four edges: the same 16x16 block tiled along each side at a
    whole 2x, so it stays crisp instead of being scaled to fit a border box. */
 #reef {
-  --slab: url("../assets/dark_prismarine.png");
-  position: fixed; inset: 0;
+  /* Sized in lvh, not by `inset: 0`. On iOS `inset: 0` is the layout viewport,
+     which grows and shrinks every time the toolbar expands or collapses — so the
+     frame used to change size as you scrolled. lvh is the viewport with the
+     toolbar out of the way, and it does not move. */
+  position: fixed; left: 0; right: 0; top: 0;
+  height: 100vh; height: 100lvh;
   z-index: var(--z-overlay);
   pointer-events: none;
-  image-rendering: pixelated;
-  background-image: var(--slab), var(--slab), var(--slab), var(--slab);
-  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  background-position: 0 0, 0 100%, 0 0, 100% 0;
-  background-size: var(--reef) var(--reef);
 }
-#reef::after {
-  content: "";
-  position: absolute;
-  inset: var(--reef);
+#reef > i {
+  position: absolute; display: block;
+  background-image: url("../assets/dark_prismarine.png");
+  background-size: var(--reef) var(--reef);
+  image-rendering: pixelated;
+}
+/* Each bar is --reef thick inside the screen plus --overscan outside it (0 on a
+   desktop). --overscan is a whole number of tiles and every bar lines its tiles
+   up with its inner edge, so the block pattern meets cleanly at the window. */
+#reef .reef-t {
+  top: calc(-1 * var(--overscan)); left: calc(-1 * var(--overscan)); right: calc(-1 * var(--overscan));
+  height: calc(var(--overscan) + var(--reef) + env(safe-area-inset-top));
+  background-position: 0 100%;
+}
+#reef .reef-b {
+  top: calc(100% - var(--reef)); left: calc(-1 * var(--overscan)); right: calc(-1 * var(--overscan));
+  height: calc(var(--reef) + var(--overscan));
+  background-position: 0 0;
+}
+#reef .reef-l {
+  top: calc(-1 * var(--overscan)); bottom: calc(-1 * var(--overscan)); left: calc(-1 * var(--overscan));
+  width: calc(var(--overscan) + var(--reef) + env(safe-area-inset-left));
+  background-position: 100% 0;
+}
+#reef .reef-r {
+  top: calc(-1 * var(--overscan)); bottom: calc(-1 * var(--overscan)); right: calc(-1 * var(--overscan));
+  width: calc(var(--overscan) + var(--reef) + env(safe-area-inset-right));
+  background-position: 0 0;
+}
+#reef .reef-edge {
+  background: none;
+  top: calc(var(--reef) + env(safe-area-inset-top));
+  left: calc(var(--reef) + env(safe-area-inset-left));
+  right: calc(var(--reef) + env(safe-area-inset-right));
+  bottom: var(--reef);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 

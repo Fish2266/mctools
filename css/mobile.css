@@ -1,6 +1,10 @@
 /* ============================================================================
    FISH'S MC TOOLS — phone layer (iOS portrait)
    Loaded last, over tokens / base / components / landing.
+
+   The frame (landing.css) is a fixed window sized in lvh with bars that run
+   past every edge of the screen. Everything here keeps the page inside that
+   window: nothing should ever be visible outside the prismarine.
    ========================================================================= */
 
 /* ---- Touch ---------------------------------------------------------------
@@ -19,45 +23,41 @@
   .tool, .head h1 { -webkit-user-select: none; user-select: none; }
 }
 
-/* ---- Safe area -----------------------------------------------------------
-   viewport-fit=cover puts the page under the status bar and the home
-   indicator. The prismarine frame is meant to run to the edge; the text is
-   not. */
 @media (max-width: 720px) {
+  /* ---- Inside the window -------------------------------------------------
+     Side padding clears the side bars; the top clears the top bar and whatever
+     the safe area adds; the bottom leaves room for the bottom bar plus the
+     glass toolbar, which floats over the last few lines of the page. */
   body {
     padding-left: calc(var(--reef) + var(--s-4) + env(safe-area-inset-left));
     padding-right: calc(var(--reef) + var(--s-4) + env(safe-area-inset-right));
   }
   .page {
-    padding-top: calc(var(--reef) + var(--s-6) + env(safe-area-inset-top));
-    padding-bottom: calc(var(--reef) + var(--s-6) + env(safe-area-inset-bottom));
+    min-height: 0;
+    justify-content: flex-start;
+    gap: var(--s-6);
+    padding-top: calc(var(--reef) + var(--s-5) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--reef) + 72px + env(safe-area-inset-bottom));
   }
-}
 
-/* ---- Head ----------------------------------------------------------------
-   Stacked, the character sits above the wordmark. The model is drawn at a
-   fixed pixel size from the stage's centre and is about 307px tall, so a
-   230x265 stage was not tall enough to hold it — the block he stands on
-   landed on top of "MC Tools". Give the stage the height the model needs. */
-@media (max-width: 720px) {
-  .head { gap: var(--s-5); }
-  .mc-stage { max-width: 250px; aspect-ratio: 1 / 1.5; }
-  /* The pool follows the stage, so pin it back under his feet. */
-  .mc-stage::after { bottom: 7%; width: 180px; }
-  .head h1 { font-size: clamp(42px, 12.5vw, 64px); }
-}
+  /* ---- Hero --------------------------------------------------------------
+     The model is built at a fixed six pixels per texel and stands 307px tall —
+     on a phone that pushed the wordmark and every tool below the fold. Draw it
+     at 80% (the `scale` property composes with the rig's own transform, which
+     the look-at animation drives) and give the stage exactly that much room. */
+  .head { gap: var(--s-3); }
+  .mc-stage { max-width: 240px; aspect-ratio: 240 / 272; }
+  .mc-rig { scale: 0.8; }
+  .mc-stage::after { bottom: 4%; width: 150px; height: 30px; }
+  .head h1 { font-size: clamp(40px, 12vw, 56px); line-height: 0.95; }
 
-/* ---- Tools ---------------------------------------------------------------
-   One column below 560px; the auto-fit grid would otherwise hold a 228px
-   minimum that leaves the cards cramped. */
-@media (max-width: 560px) {
-  .page { gap: var(--s-6); justify-content: flex-start; }
+  /* ---- Tools ------------------------------------------------------------- */
   .tools { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
-  .tool { padding: var(--s-4) var(--s-4) var(--s-4); }
-  .tool h2 { font-size: var(--t-16); }
+  .tool { padding: var(--s-4); border-radius: var(--r-lg); }
+  .tool h2 { font-size: var(--t-18); }
   .tool ul.bullets { margin-top: var(--s-3); gap: 6px; }
-  .tool ul.bullets li { font-size: var(--t-13); }
-  .tool-foot { padding-top: var(--s-4); min-height: 24px; }
+  .tool ul.bullets li { font-size: var(--t-14); }
+  .tool-foot { padding-top: var(--s-4); font-size: var(--t-13); min-height: 24px; }
   .legal { padding-inline: var(--s-2); line-height: 1.5; }
 }
 
@@ -65,16 +65,19 @@
 @media (max-width: 380px) {
   :root { --reef: 12px; }
   .mc-stage { max-width: 210px; }
-  .head h1 { font-size: 40px; }
+  .mc-rig { scale: 0.7; }
+  .head h1 { font-size: 38px; }
 }
 
 /* ---- Landscape -----------------------------------------------------------
-   ~390pt of height: the centred one-screen layout has nowhere to put a 307px
-   character, so lay the head out side by side again and let the page scroll. */
+   ~390pt tall: put the character beside the wordmark and the tools in a row,
+   and let the page scroll inside the window. */
 @media (max-height: 520px) and (orientation: landscape) {
-  .page { justify-content: flex-start; gap: var(--s-5); min-height: 0; }
-  .head { grid-template-columns: minmax(0, 1fr) minmax(0, 260px); text-align: left; justify-items: stretch; }
+  .page { justify-content: flex-start; gap: var(--s-5); min-height: 0;
+          padding-bottom: calc(var(--reef) + var(--s-6)); }
+  .head { grid-template-columns: minmax(0, 1fr) minmax(0, 220px); text-align: left; justify-items: stretch; }
   .head h1 { order: 0; }
-  .mc-stage { justify-self: end; max-width: 220px; aspect-ratio: 1 / 1.5; }
+  .mc-stage { justify-self: end; max-width: 200px; aspect-ratio: 200 / 230; }
+  .mc-rig { scale: 0.7; }
   .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
