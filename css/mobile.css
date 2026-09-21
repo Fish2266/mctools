@@ -48,33 +48,20 @@
   }
   #life { inset: var(--overscan) 0; }
 
-  /* The scrim now spans the overscanned ocean, so stretched over it the
-     gradient no longer started at its first stop where the screen starts — the
-     water under the Dynamic Island came out darker than the colour below it.
-     Hold each end flat across the overscan: the strip behind the status bar is
-     then exactly the colour at the top of the screen, and the strip behind the
-     toolbar exactly the colour at the bottom. */
-  #scrim {
-    background: linear-gradient(180deg,
-      color-mix(in srgb, var(--bg-void) 26%, transparent) 0,
-      color-mix(in srgb, var(--bg-void) 26%, transparent) var(--overscan),
-      color-mix(in srgb, var(--bg-void) 62%, transparent) calc(100% - var(--overscan)),
-      color-mix(in srgb, var(--bg-void) 62%, transparent) 100%);
-  }
-  :root[data-theme="bone"] #scrim {
-    background: linear-gradient(180deg,
-      color-mix(in srgb, var(--bg-base) 34%, transparent) 0,
-      color-mix(in srgb, var(--bg-base) 34%, transparent) var(--overscan),
-      color-mix(in srgb, var(--bg-base) 78%, transparent) calc(100% - var(--overscan)),
-      color-mix(in srgb, var(--bg-base) 78%, transparent) 100%);
-  }
+  /* iOS 26 fills the strip behind the Dynamic Island and the strip behind the
+     toolbar with one colour, taken from the page's body — not from the water
+     that runs behind them, and not from theme-color. The desktop scrim darkens
+     the water from top to bottom, so no single colour could match both ends.
+     On a phone the scrim is flat instead: the water is the same colour at every
+     edge, and that colour goes on the body, the root and the ocean layer, so
+     whichever one iOS reads, it matches. The values are the measured water
+     average under the flat scrim. */
+  #scrim { background: color-mix(in srgb, var(--bg-void) 36%, transparent); }
+  :root[data-theme="bone"] #scrim { background: color-mix(in srgb, var(--bg-base) 52%, transparent); }
 
-  /* Wherever iOS paints the root background instead of the page — behind the
-     status bar, the toolbar and the rounded corners, if the overscan does not
-     reach — it is that same top-of-screen colour: the water's average under
-     the scrim's first stop, per theme. */
-  :root { background-color: #244381; }
-  :root[data-theme="bone"] { background-color: #6e88bb; }
+  :root, body, #ocean { background-color: #203c71; }
+  :root[data-theme="bone"], :root[data-theme="bone"] body,
+  :root[data-theme="bone"] #ocean { background-color: #90a2c5; }
 
   /* Landscape puts the notch at a side, so the safe area goes on the sides. */
   body {
