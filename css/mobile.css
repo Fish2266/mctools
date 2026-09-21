@@ -48,9 +48,31 @@
   }
   #life { inset: var(--overscan) 0; }
 
-  /* Where the water still does not reach, iOS paints the root background. On
-     the desktop that is the frame's green; here it is the water itself at the
-     top edge, scrim included — sampled from the render, per theme. */
+  /* The scrim now spans the overscanned ocean, so stretched over it the
+     gradient no longer started at its first stop where the screen starts — the
+     water under the Dynamic Island came out darker than the colour below it.
+     Hold each end flat across the overscan: the strip behind the status bar is
+     then exactly the colour at the top of the screen, and the strip behind the
+     toolbar exactly the colour at the bottom. */
+  #scrim {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-void) 26%, transparent) 0,
+      color-mix(in srgb, var(--bg-void) 26%, transparent) var(--overscan),
+      color-mix(in srgb, var(--bg-void) 62%, transparent) calc(100% - var(--overscan)),
+      color-mix(in srgb, var(--bg-void) 62%, transparent) 100%);
+  }
+  :root[data-theme="bone"] #scrim {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-base) 34%, transparent) 0,
+      color-mix(in srgb, var(--bg-base) 34%, transparent) var(--overscan),
+      color-mix(in srgb, var(--bg-base) 78%, transparent) calc(100% - var(--overscan)),
+      color-mix(in srgb, var(--bg-base) 78%, transparent) 100%);
+  }
+
+  /* Wherever iOS paints the root background instead of the page — behind the
+     status bar, the toolbar and the rounded corners, if the overscan does not
+     reach — it is that same top-of-screen colour: the water's average under
+     the scrim's first stop, per theme. */
   :root { background-color: #244381; }
   :root[data-theme="bone"] { background-color: #6e88bb; }
 
