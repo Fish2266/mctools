@@ -2,9 +2,9 @@
    FISH'S MC TOOLS — phone layer (iOS portrait)
    Loaded last, over tokens / base / components / landing.
 
-   The frame (landing.css) is a fixed window sized in lvh with bars that run
-   past every edge of the screen. Everything here keeps the page inside that
-   window: nothing should ever be visible outside the prismarine.
+   On a phone there is no frame. The water runs past every edge of the screen
+   — behind the Dynamic Island, behind the glass toolbar, out into the rounded
+   corners — and the page sits on it. The desktop keeps the prismarine frame.
    ========================================================================= */
 
 /* ---- Touch ---------------------------------------------------------------
@@ -23,21 +23,56 @@
   .tool, .head h1 { -webkit-user-select: none; user-select: none; }
 }
 
-@media (max-width: 720px) {
-  /* ---- Inside the window -------------------------------------------------
-     Side padding clears the side bars; the top clears the top bar and whatever
-     the safe area adds; the bottom leaves room for the bottom bar plus the
-     glass toolbar, which floats over the last few lines of the page. */
+/* A phone, either way up: portrait is under 720px wide, landscape is under
+   520px tall with a touch screen. Desktop windows of any size keep the frame. */
+@media (max-width: 720px), (max-height: 520px) and (pointer: coarse) {
+  /* ---- No frame ----------------------------------------------------------
+     --reef is the frame's thickness and every inset on the page is measured
+     from it, so zeroing it collapses those insets along with the frame. */
+  :root { --reef: 0px; }
+  #reef { display: none; }
+
+  /* ---- Water to every edge -----------------------------------------------
+     iOS draws the page behind the status bar and the toolbar, but a
+     `position: fixed; inset: 0` layer stops at the layout viewport, which sits
+     between them and resizes as the toolbar moves. The ocean runs --overscan
+     past the top and bottom instead, sized in lvh so it holds still. The
+     swimmers keep to the visible part, so none of them spend their lap hidden
+     behind the clock. */
+  #ocean {
+    top: calc(-1 * var(--overscan));
+    height: calc(100vh + 2 * var(--overscan));
+  }
+  @supports (height: 100lvh) {
+    #ocean { height: calc(100lvh + 2 * var(--overscan)); }
+  }
+  #life { inset: var(--overscan) 0; }
+
+  /* Where the water still does not reach, iOS paints the root background. On
+     the desktop that is the frame's green; here it is the water itself at the
+     top edge, scrim included — sampled from the render, per theme. */
+  :root { background-color: #244381; }
+  :root[data-theme="bone"] { background-color: #6e88bb; }
+
+  /* Landscape puts the notch at a side, so the safe area goes on the sides. */
   body {
-    padding-left: calc(var(--reef) + var(--s-4) + env(safe-area-inset-left));
-    padding-right: calc(var(--reef) + var(--s-4) + env(safe-area-inset-right));
+    padding-left: calc(var(--s-5) + env(safe-area-inset-left));
+    padding-right: calc(var(--s-5) + env(safe-area-inset-right));
+  }
+}
+
+@media (max-width: 720px) {
+  body {
+    padding-left: calc(var(--s-4) + env(safe-area-inset-left));
+    padding-right: calc(var(--s-4) + env(safe-area-inset-right));
   }
   .page {
     min-height: 0;
     justify-content: flex-start;
     gap: var(--s-6);
-    padding-top: calc(var(--reef) + var(--s-5) + env(safe-area-inset-top));
-    padding-bottom: calc(var(--reef) + 72px + env(safe-area-inset-bottom));
+    padding-top: calc(var(--s-6) + env(safe-area-inset-top));
+    /* Room for the floating toolbar over the last card. */
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }
 
   /* ---- Hero --------------------------------------------------------------
@@ -63,7 +98,6 @@
 
 /* Small phones (iPhone SE / mini). */
 @media (max-width: 380px) {
-  :root { --reef: 12px; }
   .mc-stage { max-width: 210px; }
   .mc-rig { scale: 0.7; }
   .head h1 { font-size: 38px; }
